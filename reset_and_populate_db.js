@@ -329,9 +329,17 @@ async function resetAndPopulateDatabase() {
     `);
 
     // Add index for faster lookups
-    await connection.query(`
-      CREATE INDEX IF NOT EXISTS idx_user_fcm_tokens_token ON user_fcm_tokens (fcm_token)
-    `);
+    try {
+      await connection.query(`
+        CREATE INDEX idx_user_fcm_tokens_token ON user_fcm_tokens (fcm_token)
+      `);
+    } catch (error) {
+      // If the error is because the index already exists, we can ignore it
+      if (!error.message.includes('Duplicate key name')) {
+        throw error;
+      }
+      console.log('Index already exists, continuing...');
+    }
     console.log('FCM tokens table created successfully');
 
     // Insert sample users
