@@ -31,6 +31,7 @@ async function resetAndPopulateDatabase() {
     // Drop existing tables if they exist
     console.log('Dropping existing tables...');
     await connection.query(`
+      DROP TABLE IF EXISTS user_fcm_tokens;
       DROP TABLE IF EXISTS chat_group_message_reads;
       DROP TABLE IF EXISTS chat_group_messages;
       DROP TABLE IF EXISTS chat_group_members;
@@ -307,6 +308,31 @@ async function resetAndPopulateDatabase() {
     `);
     console.log('chat_group_message_reads table created successfully');
     console.log('All group chat tables created successfully');
+
+    // Create FCM tokens table
+    console.log('Creating FCM tokens table...');
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS user_fcm_tokens (
+        id INT NOT NULL AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        fcm_token VARCHAR(255) NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE INDEX user_id_UNIQUE (user_id ASC),
+        CONSTRAINT fk_user_fcm_tokens_users
+          FOREIGN KEY (user_id)
+          REFERENCES users (id)
+          ON DELETE CASCADE
+          ON UPDATE CASCADE
+      )
+    `);
+
+    // Add index for faster lookups
+    await connection.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_fcm_tokens_token ON user_fcm_tokens (fcm_token)
+    `);
+    console.log('FCM tokens table created successfully');
 
     // Insert sample users
     console.log('Inserting sample users...');
