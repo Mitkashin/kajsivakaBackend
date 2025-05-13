@@ -317,7 +317,7 @@ async function resetAndPopulateDatabase() {
         user_id INT NOT NULL,
         fcm_token VARCHAR(255) NOT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         UNIQUE INDEX user_id_UNIQUE (user_id ASC),
         CONSTRAINT fk_user_fcm_tokens_users
