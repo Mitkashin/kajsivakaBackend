@@ -2,6 +2,7 @@ const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const fetch = require('node-fetch');
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -15,13 +16,37 @@ let firebaseInitialized = false;
 try {
   // Check if service account file exists
   if (fs.existsSync(serviceAccountPath)) {
+    // Read the service account file
+    const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+
     // Initialize with service account file
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccountPath),
+      credential: admin.credential.cert(serviceAccount),
       databaseURL: process.env.FIREBASE_DATABASE_URL
     });
+
     firebaseInitialized = true;
     console.log('Firebase Admin SDK initialized with service account file');
+
+    // Test the Firebase connection
+    admin.messaging().send({
+      topic: 'test',
+      notification: {
+        title: 'Firebase Connection Test',
+        body: 'This is a test message to verify Firebase connectivity'
+      }
+    }, true) // dryRun=true, doesn't actually send the message
+      .then(() => console.log('Firebase connection test successful'))
+      .catch(error => {
+        console.error('Firebase connection test failed:', error);
+
+        // If there's a time synchronization issue, log it clearly
+        if (error.message && error.message.includes('invalid_grant')) {
+          console.error('TIME SYNCHRONIZATION ISSUE DETECTED: The server time may be incorrect.');
+          console.error('Current server time:', new Date().toString());
+          console.error('Please ensure the server time is correctly synchronized.');
+        }
+      });
   } else {
     console.warn('Firebase service account file not found at:', serviceAccountPath);
     console.warn('FCM functionality will not be available');
@@ -277,9 +302,52 @@ function getChannelId(type) {
   return 'kaj-si-vaka-default-channel';
 }
 
+/**
+ * Check if the server time is synchronized with an external time source
+ * @returns {Promise<boolean>} - Promise that resolves with true if time is synchronized, false otherwise
+ */
+async function checkTimeSync() {
+  try {
+    // Fetch time from a reliable external source
+    const response = await fetch('http://worldtimeapi.org/api/timezone/Europe/Skopje');
+    const data = await response.json();
+
+    // Parse the external time
+    const externalTime = new Date(data.datetime);
+    const serverTime = new Date();
+
+    // Calculate the difference in seconds
+    const diffSeconds = Math.abs((externalTime.getTime() - serverTime.getTime()) / 1000);
+
+    // If the difference is more than 5 minutes (300 seconds), consider it out of sync
+    const isInSync = diffSeconds < 300;
+
+    if (!isInSync) {
+      console.error('TIME SYNCHRONIZATION ISSUE DETECTED:');
+      console.error('Server time:', serverTime.toString());
+      console.error('External time:', externalTime.toString());
+      console.error('Difference (seconds):', diffSeconds);
+      console.error('Please synchronize the server time to fix Firebase authentication issues.');
+    }
+
+    return isInSync;
+  } catch (error) {
+    console.error('Error checking time synchronization:', error);
+    return true; // Assume it's in sync if we can't check
+  }
+}
+
+// Check time synchronization on startup
+checkTimeSync().then(isInSync => {
+  if (isInSync) {
+    console.log('Server time is properly synchronized');
+  }
+});
+
 module.exports = {
   admin,
   firebaseInitialized,
   sendFCMMessage,
-  sendFCMMessageToMultipleDevices
+  sendFCMMessageToMultipleDevices,
+  checkTimeSync
 };

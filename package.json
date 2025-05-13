@@ -23,6 +23,7 @@
     "firebase-admin": "^11.11.1",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.0",
+    "node-fetch": "^2.7.0",
     "react-native-geocoding": "^0.5.0"
   }
 }
