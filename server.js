@@ -28,7 +28,8 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 10000 // 10 seconds
+  connectTimeout: 10000, // 10 seconds
+  socketPath: process.env.DB_SOCKET_PATH || undefined // Use socket path if provided
 };
 
 // Get the local IP address for easier access from mobile devices

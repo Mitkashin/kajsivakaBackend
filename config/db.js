@@ -15,6 +15,7 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  socketPath: process.env.DB_SOCKET_PATH || undefined // Use socket path if provided
 };
 
 // Database connection details initialized
