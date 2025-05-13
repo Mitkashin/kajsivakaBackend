@@ -7,16 +7,23 @@ const fs = require("fs");
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 // Database configuration
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
+let dbConfig = {
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'kaj_si_vaka',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  socketPath: process.env.DB_SOCKET_PATH || undefined // Use socket path if provided
+  queueLimit: 0
 };
+
+// If socket path is provided, use it instead of host/port
+if (process.env.DB_SOCKET_PATH) {
+  console.log(`Using socket connection: ${process.env.DB_SOCKET_PATH}`);
+  dbConfig.socketPath = process.env.DB_SOCKET_PATH;
+} else {
+  console.log(`Using TCP connection: ${process.env.DB_HOST}`);
+  dbConfig.host = process.env.DB_HOST || '127.0.0.1';
+}
 
 // Database connection details initialized
 
@@ -24,14 +31,22 @@ const dbConfig = {
 const checkAndCreateDatabase = async () => {
   try {
     // Create a connection without specifying a database
-    const tempPool = mysql.createPool({
-      host: dbConfig.host,
+    let tempConfig = {
       user: dbConfig.user,
       password: dbConfig.password,
       waitForConnections: true,
       connectionLimit: 1,
-      queueLimit: 0,
-    }).promise();
+      queueLimit: 0
+    };
+
+    // Use the same connection method as the main pool
+    if (dbConfig.socketPath) {
+      tempConfig.socketPath = dbConfig.socketPath;
+    } else {
+      tempConfig.host = dbConfig.host;
+    }
+
+    const tempPool = mysql.createPool(tempConfig).promise();
 
     // Check if database exists
     const [rows] = await tempPool.query(
