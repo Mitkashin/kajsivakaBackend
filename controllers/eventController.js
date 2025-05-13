@@ -49,7 +49,11 @@ exports.getAllEvents = async (req, res) => {
       const [countResult] = await db.execute(countSql);
       const totalCount = countResult[0].total;
 
-      // Get paginated events
+      // Get paginated events - use template literals for LIMIT and OFFSET to avoid MySQL prepared statement issues
+      if (sql.includes('LIMIT ? OFFSET ?')) {
+        sql = sql.replace('LIMIT ? OFFSET ?', `LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
+        params = params.slice(0, -2); // Remove limit and offset from params
+      }
       const [events] = await db.execute(sql, params);
 
       // Process events to set the correct location
@@ -115,7 +119,11 @@ exports.getAllEvents = async (req, res) => {
     const [countResult] = await db.execute(countSql, countParams);
     const totalCount = countResult[0].total;
 
-    // Get paginated events
+    // Get paginated events - use template literals for LIMIT and OFFSET to avoid MySQL prepared statement issues
+    if (sql.includes('LIMIT ? OFFSET ?')) {
+      sql = sql.replace('LIMIT ? OFFSET ?', `LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
+      params = params.slice(0, -2); // Remove limit and offset from params
+    }
     const [events] = await db.execute(sql, params);
 
     // Process events to set the correct location

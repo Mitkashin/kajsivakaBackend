@@ -48,8 +48,9 @@ exports.getPremiumVenues = async (req, res) => {
     const totalCount = countResult[0].total;
 
     // Get paginated premium venues
-    const sql = "SELECT * FROM venues WHERE premium = 1 LIMIT ? OFFSET ?";
-    const [venues] = await db.execute(sql, [limit, offset]);
+    // Convert limit and offset to numbers to avoid MySQL prepared statement issues
+    const sql = `SELECT * FROM venues WHERE premium = 1 LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+    const [venues] = await db.execute(sql);
 
     res.status(200).json({
       success: true,
@@ -82,8 +83,9 @@ exports.getNonPremiumVenues = async (req, res) => {
     const totalCount = countResult[0].total;
 
     // Get paginated non-premium venues
-    const sql = "SELECT * FROM venues WHERE premium = 0 OR premium IS NULL LIMIT ? OFFSET ?";
-    const [venues] = await db.execute(sql, [limit, offset]);
+    // Convert limit and offset to numbers to avoid MySQL prepared statement issues
+    const sql = `SELECT * FROM venues WHERE premium = 0 OR premium IS NULL LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+    const [venues] = await db.execute(sql);
 
     res.status(200).json({
       success: true,
