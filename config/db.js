@@ -31,22 +31,14 @@ if (process.env.DB_SOCKET_PATH) {
 const checkAndCreateDatabase = async () => {
   try {
     // Create a connection without specifying a database
-    let tempConfig = {
+    const tempPool = mysql.createPool({
+      host: dbConfig.host,
       user: dbConfig.user,
       password: dbConfig.password,
       waitForConnections: true,
       connectionLimit: 1,
-      queueLimit: 0
-    };
-
-    // Use the same connection method as the main pool
-    if (dbConfig.socketPath) {
-      tempConfig.socketPath = dbConfig.socketPath;
-    } else {
-      tempConfig.host = dbConfig.host;
-    }
-
-    const tempPool = mysql.createPool(tempConfig).promise();
+      queueLimit: 0,
+    }).promise();
 
     // Check if database exists
     const [rows] = await tempPool.query(
