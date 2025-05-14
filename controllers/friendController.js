@@ -260,13 +260,13 @@ const searchUsers = async (req, res) => {
   }
 
   try {
-    // Search for users by username or full name
+    // Search for users by username, full name, or email
     const [users] = await db.execute(`
-      SELECT id, username, full_name, avatar
+      SELECT id, username, full_name, avatar, email
       FROM users
-      WHERE (username LIKE ? OR full_name LIKE ?) AND id != ?
+      WHERE (username LIKE ? OR full_name LIKE ? OR email LIKE ?) AND id != ?
       LIMIT 20
-    `, [`%${query}%`, `%${query}%`, userId]);
+    `, [`%${query}%`, `%${query}%`, `%${query}%`, userId]);
 
     // Get friend status for each user
     const usersWithStatus = await Promise.all(users.map(async (user) => {
